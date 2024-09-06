@@ -1,0 +1,8 @@
+# Ignora o diretório node_modules
+node_modules/
+
+# Ignora o diretório coverage
+coverage/
+
+# Ignora o arquivo .DS_Store
+.DS_Store

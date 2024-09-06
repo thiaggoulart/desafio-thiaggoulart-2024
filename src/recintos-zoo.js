@@ -19,7 +19,8 @@ class RecintosZoo {
     }
 
     validaAnimal(animal) {
-        const isValid = Object.keys(this.animais).includes(animal.toLowerCase());
+        animal = animal.toLowerCase();
+        const isValid = Object.keys(this.animais).includes(animal);
         return isValid;
     }
 
@@ -50,6 +51,7 @@ class RecintosZoo {
 
 
     analisaRecintos(animal, quantidade) {
+        animal = animal.toLowerCase();
         const resultado = { recintosViaveis: [], erro: null };
 
         if (!this.validaAnimal(animal)) {
@@ -64,27 +66,27 @@ class RecintosZoo {
             return resultado;
         }
 
-        const animalInfo = this.animais[animal.toLowerCase()];
+        const animalInfo = this.animais[animal];
 
         let recintosViaveis = this.recintos.filter(recinto => {
             const biomas = recinto.bioma.split(' e ');
-            const espacoLivre = this.calculaEspacoLivre(recinto, animal.toLowerCase(), quantidade);
+            const espacoLivre = this.calculaEspacoLivre(recinto, animal, quantidade);
             const biomaNecessario = animalInfo.bioma.split(' ou ');
             const biomaCompativel = biomaNecessario.some(bioma => biomas.includes(bioma));
             let carnivorosNoRecinto = false;
             let possuiEspecieCompativel = true;
 
-            if (animal.toLowerCase() === 'macaco') {
+            if (animal === 'macaco') {
                 possuiEspecieCompativel = (quantidade > 1 || Object.values(recinto.animaisExistentes).some(val => val > 0))
             }
 
-            if (animal.toLowerCase() === 'hipopotamo') {
+            if (animal === 'hipopotamo') {
                 possuiEspecieCompativel = biomas.includes('savana') && biomas.includes('rio');
             }
 
             if (animalInfo.carnivoro) {
                 carnivorosNoRecinto = Object.keys(recinto.animaisExistentes).forEach(element => {
-                    return this.animais[element].carnivoro && element !== animal.toLowerCase();
+                    return this.animais[element].carnivoro && element !== animal;
                 });
                 possuiEspecieCompativel = !carnivorosNoRecinto || Object.keys(recinto.animaisExistentes).length === 0;
             } else {
@@ -106,14 +108,14 @@ class RecintosZoo {
                 if (!recinto.bioma.includes(' e ')) return false;
 
                 const biomas = recinto.bioma.split(' e ');
-                const espacoLivre = this.calculaEspacoLivre(recinto, animal.toLowerCase(), quantidade);
+                const espacoLivre = this.calculaEspacoLivre(recinto, animal, quantidade);
                 const biomaNecessario = animalInfo.bioma.split(' ou ');
                 const biomaCompativel = biomaNecessario.some(bioma => biomas.includes(bioma));
                 let possuiEspecieCompativel = true;
 
                 if (animalInfo.carnivoro) {
                     const carnivorosNoRecinto = Object.keys(recinto.animaisExistentes).some(a => {
-                        return this.animais[a].carnivoro && a !== animal.toLowerCase();
+                        return this.animais[a].carnivoro && a !== animal;
                     });
                     possuiEspecieCompativel = !carnivorosNoRecinto || Object.keys(recinto.animaisExistentes).length === 0;
                 }
@@ -134,7 +136,7 @@ class RecintosZoo {
 
         if (recintosViaveis.length > 0) {
 
-            var disponiveis = recintosViaveis.map(r => `Recinto ${r.numero} (espaço livre: ${this.calculaEspacoLivre(r, animal.toLowerCase(), quantidade)} total: ${r.tamanhoTotal})`);
+            var disponiveis = recintosViaveis.map(r => `Recinto ${r.numero} (espaço livre: ${this.calculaEspacoLivre(r, animal, quantidade)} total: ${r.tamanhoTotal})`);
             resultado.recintosViaveis = disponiveis;
         } else {
             resultado.erro = 'Não há recinto viável';
