@@ -1,0 +1,72 @@
+import { RecintosZoo } from "./recintos-zoo.js";
+
+describe('Recintos do Zoologico', () => {
+    test('Deve rejeitar animal inválido', () => {
+        const resultado = new RecintosZoo().analisaRecintos('UNICORNIO', 1);
+        expect(resultado.erro).toBe("Animal inválido");
+        expect(resultado.recintosViaveis).toBeFalsy();
+    });
+
+    test('Deve rejeitar quantidade inválida', () => {
+        const resultado = new RecintosZoo().analisaRecintos('MACACO', 0);
+        expect(resultado.erro).toBe("Quantidade inválida");
+        expect(resultado.recintosViaveis).toBeFalsy();
+    });
+
+    test('Não deve encontrar recintos para 10 macacos', () => {
+        const resultado = new RecintosZoo().analisaRecintos('MACACO', 10);
+        expect(resultado.erro).toBe("Não há recinto viável");
+        expect(resultado.recintosViaveis).toBeFalsy();
+    });
+
+    test('Deve encontrar recinto para 1 crocodilo', () => {
+        const resultado = new RecintosZoo().analisaRecintos('CROCODILO', 1);
+        expect(resultado.erro).toBeFalsy();
+        expect(resultado.recintosViaveis[0]).toBe('Recinto 4 (espaço livre: 5 total: 8)');
+        expect(resultado.recintosViaveis.length).toBe(1);
+    });
+
+    test('Deve encontrar recintos para 2 macacos', () => {
+        const resultado = new RecintosZoo().analisaRecintos('MACACO', 2);
+        expect(resultado.erro).toBeFalsy();
+        expect(resultado.recintosViaveis[0]).toBe('Recinto 1 (espaço livre: 5 total: 10)');
+        expect(resultado.recintosViaveis[1]).toBe('Recinto 2 (espaço livre: 3 total: 5)');
+        expect(resultado.recintosViaveis[2]).toBe('Recinto 3 (espaço livre: 2 total: 7)');
+        expect(resultado.recintosViaveis.length).toBe(3);
+    });
+
+    test('Deve rejeitar quantidade não especificada para animal válido', () => {
+        const resultado = new RecintosZoo().analisaRecintos('LEAO', undefined);
+        expect(resultado.erro).toBe("Quantidade inválida");
+        expect(resultado.recintosViaveis).toBeFalsy();
+    });
+
+    test('Deve rejeitar quantidade negativa para animal válido', () => {
+        const resultado = new RecintosZoo().analisaRecintos('LEAO', -3);
+        expect(resultado.erro).toBe("Quantidade inválida");
+        expect(resultado.recintosViaveis).toBeFalsy();
+    });
+
+    test('Deve rejeitar quantidade de animais ao meio para animal válido', () => {
+        const resultado = new RecintosZoo().analisaRecintos('MACACO', 1.5);
+        expect(resultado.erro).toBe("Quantidade inválida");
+        expect(resultado.recintosViaveis).toBeFalsy();
+    });
+
+    test('Deve informar que não há recintos viáveis quando todos estão cheios', () => {
+        const resultado = new RecintosZoo().analisaRecintos('LEAO', 20);
+        expect(resultado.erro).toBe("Não há recinto viável");
+        expect(resultado.recintosViaveis).toBeFalsy();
+    });
+
+    test('Deve listar recintos viáveis na ordem correta', () => {
+        const resultado = new RecintosZoo().analisaRecintos('Gazela', 2);
+        expect(resultado.erro).toBeFalsy();
+        const expectedOrder = [
+            'Recinto 1 (espaço livre: 1 total: 10)',
+            'Recinto 3 (espaço livre: 1 total: 7)',
+        ];
+        expect(resultado.recintosViaveis).toEqual(expectedOrder);
+        expect(resultado.recintosViaveis.length).toBe(expectedOrder.length);
+    });
+});
