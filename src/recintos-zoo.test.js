@@ -62,11 +62,21 @@ describe('Recintos do Zoologico', () => {
     test('Deve listar recintos viáveis na ordem correta', () => {
         const resultado = new RecintosZoo().analisaRecintos('Gazela', 2);
         expect(resultado.erro).toBeFalsy();
-        const expectedOrder = [
-            'Recinto 1 (espaço livre: 1 total: 10)',
-            'Recinto 3 (espaço livre: 1 total: 7)',
-        ];
-        expect(resultado.recintosViaveis).toEqual(expectedOrder);
-        expect(resultado.recintosViaveis.length).toBe(expectedOrder.length);
+        expect(resultado.recintosViaveis[0]).toBe('Recinto 1 (espaço livre: 2 total: 10)');
+        expect(resultado.recintosViaveis[1]).toBe('Recinto 3 (espaço livre: 1 total: 7)');
+        expect(resultado.recintosViaveis.length).toBe(2);
+    });
+
+    test('Deve encontrar recintos viáveis para o Hipopotamo', () => {
+        const resultado = new RecintosZoo().analisaRecintos('hipopotamo', 1);
+        expect(resultado.erro).toBeFalsy();
+        expect(resultado.recintosViaveis[0]).toBe('Recinto 3 (espaço livre: 0 total: 7)');
+        expect(resultado.recintosViaveis.length).toBe(1);
+    });
+
+    test('Não deve encontrar recintos viáveis para o Hipopotamo quando não há espaço suficiente', () => {
+        const resultado = new RecintosZoo().analisaRecintos('hipopotamo', 3);
+        expect(resultado.erro).toBe('Não há recinto viável');
+        expect(resultado.recintosViaveis).toBeFalsy();
     });
 });

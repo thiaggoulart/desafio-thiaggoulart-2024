@@ -22,10 +22,9 @@ class Animal {
             return { erro: 'Quantidade inválida', recintosViaveis: null };
         }
 
-        const recintosViaveis = this.recintos.filter(recinto => 
+        const recintosViaveis = this.recintos.filter(recinto =>
             this.ehViavelParaRecinto(recinto, quantidade)
         );
-
         return { erro: null, recintosViaveis };
     }
 
@@ -35,6 +34,7 @@ class Animal {
         const biomaNecessario = this.info.bioma.split(' ou ');
         const biomaCompativel = biomaNecessario.some(bioma => biomas.includes(bioma));
         const possuiEspecieCompativel = this.ehEspecieCompativel(recinto, quantidade);
+
         return espacoLivre >= 0 && biomaCompativel && possuiEspecieCompativel;
     }
 
@@ -50,7 +50,7 @@ class Animal {
         }
 
         const espacoNecessario = quantidade * tamanhoAnimal;
-        const espacoExtra = this.deveConsiderarEspacoExtra(recinto) ? tamanhoAnimal : 0;
+        const espacoExtra = this.deveConsiderarEspacoExtra(recinto) ? 1 : 0;
         return totalEspaco - espacoAtual - espacoNecessario - espacoExtra;
     }
 
@@ -62,12 +62,10 @@ class Animal {
     ehEspecieCompativel(recinto) {
         if (this.info.carnivoro) {
             return !Object.keys(recinto.animaisExistentes).some(animal => {
-                return this.animais[animal].carnivoro && (animal !== this.nome && recinto.animaisExistentes[animal] > 0);
+                return animal !== this.nome && recinto.animaisExistentes[animal] > 0;
             });
         } else {
             return !Object.keys(recinto.animaisExistentes).some(animal => {
-                if(recinto.numero === 2) {
-                }
                 return this.animais[animal].carnivoro && recinto.animaisExistentes[animal] > 0;
             });
         }
@@ -92,17 +90,6 @@ class Recinto {
         this.bioma = dados.bioma;
         this.tamanhoTotal = dados.tamanhoTotal;
         this.animaisExistentes = dados.animaisExistentes;
-    }
-
-    encontrarPorBiomas(biomasNecessarios) {
-        const biomas = this.bioma.split(' e ');
-        return biomasNecessarios.some(bioma => biomas.includes(bioma));
-    }
-
-    temAnimalCarnivoro(animais) {
-        return Object.keys(this.animaisExistentes).some(animal => {
-            return animais[animal].carnivoro && this.animaisExistentes[animal] > 0;
-        });
     }
 }
 
