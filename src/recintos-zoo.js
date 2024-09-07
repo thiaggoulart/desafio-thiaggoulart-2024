@@ -1,3 +1,111 @@
+class Animal {
+    constructor(nome, recintos, animais) {
+        this.nome = nome.toLowerCase();
+        this.recintos = recintos;
+        this.animais = animais;
+        this.info = this.animais[this.nome];
+    }
+
+    validaAnimal() {
+        return Object.keys(this.animais).includes(this.nome);
+    }
+
+    validaQuantidade(quantidade) {
+        return Number.isInteger(quantidade) && quantidade > 0;
+    }
+
+    encontrarRecintos(quantidade) {
+        if (!this.validaAnimal()) {
+            return { erro: 'Animal inválido', recintosViaveis: null };
+        }
+        if (!this.validaQuantidade(quantidade)) {
+            return { erro: 'Quantidade inválida', recintosViaveis: null };
+        }
+
+        const recintosViaveis = this.recintos.filter(recinto => 
+            this.ehViavelParaRecinto(recinto, quantidade)
+        );
+
+        return { erro: null, recintosViaveis };
+    }
+
+    ehViavelParaRecinto(recinto, quantidade) {
+        const biomas = recinto.bioma.split(' e ');
+        const espacoLivre = this.calculaEspacoLivre(recinto, quantidade);
+        const biomaNecessario = this.info.bioma.split(' ou ');
+        const biomaCompativel = biomaNecessario.some(bioma => biomas.includes(bioma));
+        const possuiEspecieCompativel = this.ehEspecieCompativel(recinto, quantidade);
+        return espacoLivre >= 0 && biomaCompativel && possuiEspecieCompativel;
+    }
+
+    calculaEspacoLivre(recinto, quantidade) {
+        const tamanhoAnimal = this.info.tamanho;
+        const totalEspaco = recinto.tamanhoTotal;
+        let espacoAtual = 0;
+
+        for (const [key, valor] of Object.entries(recinto.animaisExistentes)) {
+            if (this.animais[key]) {
+                espacoAtual += valor * this.animais[key].tamanho;
+            }
+        }
+
+        const espacoNecessario = quantidade * tamanhoAnimal;
+        const espacoExtra = this.deveConsiderarEspacoExtra(recinto) ? tamanhoAnimal : 0;
+        return totalEspaco - espacoAtual - espacoNecessario - espacoExtra;
+    }
+
+    deveConsiderarEspacoExtra(recinto) {
+        const possuiAnimaisExistentes = Object.values(recinto.animaisExistentes).some(val => val > 0);
+        return possuiAnimaisExistentes && !recinto.animaisExistentes[this.nome];
+    }
+
+    ehEspecieCompativel(recinto) {
+        if (this.info.carnivoro) {
+            return !Object.keys(recinto.animaisExistentes).some(animal => {
+                return this.animais[animal].carnivoro && (animal !== this.nome && recinto.animaisExistentes[animal] > 0);
+            });
+        } else {
+            return !Object.keys(recinto.animaisExistentes).some(animal => {
+                if(recinto.numero === 2) {
+                }
+                return this.animais[animal].carnivoro && recinto.animaisExistentes[animal] > 0;
+            });
+        }
+    }
+}
+
+class Macaco extends Animal {
+    ehEspecieCompativel(recinto, quantidade) {
+        return super.ehEspecieCompativel(recinto) && (quantidade > 1 || Object.values(recinto.animaisExistentes).some(val => val > 0));
+    }
+}
+
+class Hipopotamo extends Animal {
+    ehEspecieCompativel(recinto) {
+        return super.ehEspecieCompativel(recinto) && recinto.bioma.includes('savana') && recinto.bioma.includes('rio');
+    }
+}
+
+class Recinto {
+    constructor(dados) {
+        this.numero = dados.numero;
+        this.bioma = dados.bioma;
+        this.tamanhoTotal = dados.tamanhoTotal;
+        this.animaisExistentes = dados.animaisExistentes;
+    }
+
+    encontrarPorBiomas(biomasNecessarios) {
+        const biomas = this.bioma.split(' e ');
+        return biomasNecessarios.some(bioma => biomas.includes(bioma));
+    }
+
+    temAnimalCarnivoro(animais) {
+        return Object.keys(this.animaisExistentes).some(animal => {
+            return animais[animal].carnivoro && this.animaisExistentes[animal] > 0;
+        });
+    }
+}
+
 class RecintosZoo {
     constructor() {
         this.recintos = [
@@ -18,131 +126,32 @@ class RecintosZoo {
         };
     }
 
-    validaAnimal(animal) {
-        animal = animal.toLowerCase();
-        const isValid = Object.keys(this.animais).includes(animal);
-        return isValid;
+    criarAnimal(nome) {
+        switch (nome) {
+            case 'macaco':
+                return new Macaco(nome, this.recintos, this.animais);
+            case 'hipopotamo':
+                return new Hipopotamo(nome, this.recintos, this.animais);
+            default:
+                return new Animal(nome, this.recintos, this.animais);
+        }
     }
 
-    validaQuantidade(quantidade) {
-        const isValid = Number.isInteger(quantidade) && quantidade > 0;
-        return isValid;
-    }
+    analisaRecintos(animalNome, quantidade) {
+        let nome = animalNome.toLowerCase();
+        const animal = this.criarAnimal(nome);
+        const { erro, recintosViaveis } = animal.encontrarRecintos(quantidade);
 
-    calculaEspacoLivre(recinto, animal, quantidade) {
-        const tamanhoAnimal = this.animais[animal].tamanho;
-        const totalEspaco = recinto.tamanhoTotal;
-        let espacoAtual = 0;
-
-        for (const [key, valor] of Object.entries(recinto.animaisExistentes)) {
-            if (this.animais[key]) {
-                espacoAtual += valor * this.animais[key].tamanho;
-            }
+        if (erro) {
+            return { recintosViaveis: null, erro };
         }
-
-        const espacoNecessario = quantidade * tamanhoAnimal;
-        const possuiAnimaisExistentes = Object.values(recinto.animaisExistentes).some(val => val > 0);
-        const jaTemEssaEspecie = recinto.animaisExistentes[animal] > 0;
-        const espacoExtra = possuiAnimaisExistentes && !jaTemEssaEspecie ? tamanhoAnimal : 0;
-        const espacoLivre = totalEspaco - espacoAtual - espacoNecessario - espacoExtra;
-
-        return espacoLivre;
-    }
-
-
-    analisaRecintos(animal, quantidade) {
-        animal = animal.toLowerCase();
-        const resultado = { recintosViaveis: [], erro: null };
-
-        if (!this.validaAnimal(animal)) {
-            resultado.erro = 'Animal inválido';
-            resultado.recintosViaveis = null;
-            return resultado;
-        }
-
-        if (!this.validaQuantidade(quantidade)) {
-            resultado.erro = 'Quantidade inválida';
-            resultado.recintosViaveis = null;
-            return resultado;
-        }
-
-        const animalInfo = this.animais[animal];
-
-        let recintosViaveis = this.recintos.filter(recinto => {
-            const biomas = recinto.bioma.split(' e ');
-            const espacoLivre = this.calculaEspacoLivre(recinto, animal, quantidade);
-            const biomaNecessario = animalInfo.bioma.split(' ou ');
-            const biomaCompativel = biomaNecessario.some(bioma => biomas.includes(bioma));
-            let carnivorosNoRecinto = false;
-            let possuiEspecieCompativel = true;
-
-            if (animal === 'macaco') {
-                possuiEspecieCompativel = (quantidade > 1 || Object.values(recinto.animaisExistentes).some(val => val > 0))
-            }
-
-            if (animal === 'hipopotamo') {
-                possuiEspecieCompativel = biomas.includes('savana') && biomas.includes('rio');
-            }
-
-            if (animalInfo.carnivoro) {
-                carnivorosNoRecinto = Object.keys(recinto.animaisExistentes).forEach(element => {
-                    return this.animais[element].carnivoro && element !== animal;
-                });
-                possuiEspecieCompativel = !carnivorosNoRecinto || Object.keys(recinto.animaisExistentes).length === 0;
-            } else {
-                Object.keys(recinto.animaisExistentes).forEach(element => {
-                    if (this.animais[element].carnivoro && recinto.animaisExistentes[element] > 0) {
-                        carnivorosNoRecinto = true;
-                    }
-                });
-                possuiEspecieCompativel = !carnivorosNoRecinto;
-            }
-
-            const compatibilidade = espacoLivre >= 0 && biomaCompativel && possuiEspecieCompativel;
-
-            return compatibilidade;
-        });
 
         if (recintosViaveis.length === 0) {
-            recintosViaveis = this.recintos.filter(recinto => {
-                if (!recinto.bioma.includes(' e ')) return false;
-
-                const biomas = recinto.bioma.split(' e ');
-                const espacoLivre = this.calculaEspacoLivre(recinto, animal, quantidade);
-                const biomaNecessario = animalInfo.bioma.split(' ou ');
-                const biomaCompativel = biomaNecessario.some(bioma => biomas.includes(bioma));
-                let possuiEspecieCompativel = true;
-
-                if (animalInfo.carnivoro) {
-                    const carnivorosNoRecinto = Object.keys(recinto.animaisExistentes).some(a => {
-                        return this.animais[a].carnivoro && a !== animal;
-                    });
-                    possuiEspecieCompativel = !carnivorosNoRecinto || Object.keys(recinto.animaisExistentes).length === 0;
-                }
-
-                if (animal === 'macaco') {
-                    possuiEspecieCompativel = quantidade > 1 || Object.values(recinto.animaisExistentes).some(val => val > 0);
-                }
-
-                if (animal === 'hipopotamo') {
-                    possuiEspecieCompativel = biomas.includes('savana') && biomas.includes('rio');
-                }
-
-                const compatibilidade = espacoLivre >= 0 && biomaCompativel && possuiEspecieCompativel;
-
-                return compatibilidade;
-            });
+            return { recintosViaveis: null, erro: 'Não há recinto viável' };
         }
 
-        if (recintosViaveis.length > 0) {
-
-            var disponiveis = recintosViaveis.map(r => `Recinto ${r.numero} (espaço livre: ${this.calculaEspacoLivre(r, animal, quantidade)} total: ${r.tamanhoTotal})`);
-            resultado.recintosViaveis = disponiveis;
-        } else {
-            resultado.erro = 'Não há recinto viável';
-            resultado.recintosViaveis = null;
-        }
-        return resultado;
+        const resultado = recintosViaveis.map(r => `Recinto ${r.numero} (espaço livre: ${animal.calculaEspacoLivre(new Recinto(r), quantidade)} total: ${r.tamanhoTotal})`);
+        return { recintosViaveis: resultado, erro: null };
     }
 }
 
